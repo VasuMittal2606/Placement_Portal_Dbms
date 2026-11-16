@@ -1,0 +1,114 @@
+# ============================================================
+# CampusHire — Placement Portal
+# Files that must never be committed: secrets, credentials,
+# local environments, caches and machine specific artefacts.
+# ============================================================
+
+# ------------------------------------------------------------
+# Secrets and credentials  (NEVER commit these)
+# ------------------------------------------------------------
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ------------------------------------------------------------
+# Python bytecode and caches
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ------------------------------------------------------------
+# Virtual environments
+# ------------------------------------------------------------
+venv/
+.venv/
+env/
+ENV/
+virtualenv/
+.python-version
+
+# ------------------------------------------------------------
+# Tooling caches / reports
+# ------------------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.tox/
+.nox/
+
+# ------------------------------------------------------------
+# Logs and runtime artefacts
+# ------------------------------------------------------------
+*.log
+logs/
+*.pid
+*.pid.lock
+*.bak
+*.tmp
+*.swp
+*~
+
+# ------------------------------------------------------------
+# Database dumps  (mysql/*.sql scripts stay tracked)
+# ------------------------------------------------------------
+*.sql.gz
+*.dump
+*.sqlite
+*.db
+*.db-journal
+backup*/
+dumps/
+
+# ------------------------------------------------------------
+# Jupyter / notebooks checkpoints
+# ------------------------------------------------------------
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ------------------------------------------------------------
+# Editors and IDEs
+# ------------------------------------------------------------
+.vscode/
+!.vscode/settings.json.example
+.idea/
+*.iml
+*.code-workspace
+.project
+.classpath
+
+# ------------------------------------------------------------
+# Operating system files
+# ------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ------------------------------------------------------------
+# Streamlit local state  (secrets.toml is covered above;
+# .streamlit/config.toml is shared config and stays tracked)
+# ------------------------------------------------------------
+.streamlit/credentials.toml
