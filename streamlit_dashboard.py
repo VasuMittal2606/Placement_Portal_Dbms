@@ -8,6 +8,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from datetime import datetime
+from matplotlib.colors import LinearSegmentedColormap
+
+# pandas resolves a *string* cmap against matplotlib's registered colormap
+# names, so a hex colour can never be passed there directly. Build a real
+# colormap from the CampusHire teal palette instead (kept dark enough for the
+# light table text of the dashboard theme).
+TEAL_CMAP = LinearSegmentedColormap.from_list(
+    "campushire_teal", ["#0B3B36", "#0F766E"]
+)
 
 # ─────────────────────────────────────────────────────────────────────
 # PAGE CONFIGURATION
@@ -547,7 +556,7 @@ elif nav == "Companies":
     # Table
     st.dataframe(
         comp_df.style
-        .background_gradient(subset=["avg_ctc"], cmap="#0F766E")
+        .background_gradient(subset=["avg_ctc"], cmap=TEAL_CMAP)
         .highlight_max(subset=["offers"], color="#0D9488"),
         hide_index=True,
         use_container_width=True,

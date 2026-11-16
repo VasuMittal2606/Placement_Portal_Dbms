@@ -9,7 +9,15 @@ import plotly.express as px
 import streamlit as st
 
 from database import auth_db, recruiter_db as rdb
-from theme import inject_css, metric_card, page_header, show_message, sign_out_button, style_figure
+from theme import (
+    goto_login,
+    inject_css,
+    metric_card,
+    page_header,
+    show_message,
+    sign_out_button,
+    style_figure,
+)
 
 st.set_page_config(page_title="Recruiter | CampusHire", page_icon="🏢", layout="wide")
 inject_css()
@@ -18,7 +26,7 @@ user = st.session_state.get("user")
 if not user or user["role"] != "recruiter":
     st.warning("Sign in as a recruiter from the home page.")
     if st.button("Go to login"):
-        st.switch_page("app.py")
+        goto_login()
     st.stop()
 
 if "recruiter_id" not in st.session_state:

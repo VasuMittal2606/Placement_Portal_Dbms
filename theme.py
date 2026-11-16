@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import os
+
 import plotly.graph_objects as go
 import streamlit as st
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 
 CSS = """
 <style>
@@ -184,7 +187,30 @@ def show_message(message: str) -> None:
         st.error(text or "Unexpected database response")
 
 
+def entrypoint_script() -> str:
+    """File name of the script Streamlit launched (`streamlit run <this>`).
+
+    `st.switch_page` resolves its argument against the running entrypoint's
+    directory and only accepts the entrypoint itself or files inside `pages/`.
+    Hard-coding "app.py" therefore breaks as soon as the app is started from
+    another entrypoint (for example `streamlit run streamlit_dashboard.py`),
+    so the target is read from the script-run context instead.
+    """
+    try:
+        ctx = get_script_run_ctx()
+        if ctx is not None and ctx.main_script_path:
+            return os.path.basename(ctx.main_script_path)
+    except Exception:  # bare mode / no runtime context
+        pass
+    return "app.py"
+
+
+def goto_login() -> None:
+    """Clear the session and return to the entrypoint (the sign-in screen)."""
+    st.session_state.pop("user", None)
+    st.switch_page(entrypoint_script())
+
+
 def sign_out_button() -> None:
     if st.sidebar.button("Sign out", use_container_width=True):
-        st.session_state.pop("user", None)
-        st.switch_page("app.py")
+        goto_login()
