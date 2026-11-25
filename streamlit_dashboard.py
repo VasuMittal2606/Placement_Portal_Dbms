@@ -7,7 +7,6 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from datetime import datetime
 from matplotlib.colors import LinearSegmentedColormap
 
 # pandas resolves a *string* cmap against matplotlib's registered colormap
@@ -186,13 +185,24 @@ st.markdown(
         outline-offset: 2px;
     }
 
-    /* ========== PLOTLY CHART CONTAINERS ========== */
-    .chart-card {
-        background: #0F172A;
+    /* ========== CHART / CONTENT CARDS ========== */
+    /* st.container(border=True) renders this wrapper. Styling the real
+       container (instead of a raw <div>) is what keeps the heading and the
+       chart inside one card. */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #0F172A;
         border: 1px solid #1E293B;
         border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 16px;
+        padding: 4px 6px;
+    }
+
+    /* Sidebar section heading */
+    .sidebar-title {
+        color: #F8FAFC;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        margin: 0 0 10px 0;
     }
 
     /* ========== DATA TABLE ========== */
@@ -319,14 +329,12 @@ def get_dummy_student_data():
 # ─────────────────────────────────────────────────────────────────────
 # SIDEBAR NAVIGATION (SaaSUI style)
 # ─────────────────────────────────────────────────────────────────────
-with st.sidebar:
-    # Sidebar header/branding
-    st.markdown(
-        '<div class="sidebar"><span>CampusHire</span></div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown("---")
+# The brand mark goes through st.logo() because that is the only way to land
+# in the sidebar header, above the automatic page navigation: anything written
+# inside `with st.sidebar:` is rendered below that navigation.
+st.logo("assets/campushire_logo.svg", size="large")
 
+with st.sidebar:
     nav = st.radio(
         "Navigation",
         [
@@ -341,10 +349,9 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.caption(f"Last updated: {datetime.now().strftime('%H:%M:%S')}")
 
     # Quick stats in sidebar
-    st.markdown("#### Quick Stats")
+    st.markdown("<p class='sidebar-title'>Quick Stats</p>", unsafe_allow_html=True)
     metrics = get_dummy_metrics()
     st.metric("Placements", f"{metrics['total_placed']}+")
     st.metric("Rate", metrics['placement_rate'])
@@ -371,9 +378,7 @@ if nav == "Overview":
     st.markdown("### Dashboard Overview")
 
     # --- KPI Metrics Row (4 columns) ---
-    st.markdown("<div class='chart-card'>", unsafe_allow_html=True)
     st.markdown("#### Key Performance Indicators")
-    st.markdown("</div>", unsafe_allow_html=True)
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -423,17 +428,13 @@ if nav == "Overview":
         )
 
     # --- Middle Row: Two charts ---
-    st.markdown("<div class='chart-card'>", unsafe_allow_html=True)
-    st.markdown("#### Monthly Placement Velocity")
-    st.markdown("</div>", unsafe_allow_html=True)
-
     vel_df = get_dummy_velocity_data()
 
     col_chart1, col_chart2 = st.columns(2)
 
     with col_chart1:
-        st.markdown("<div class='chart-card'>", unsafe_allow_html=True)
-        st.markdown("Monthly Placement Velocity")
+        velocity_card = st.container(border=True)
+        velocity_card.markdown("#### Monthly Placement Velocity")
 
         fig_line = px.line(
             vel_df,
@@ -455,12 +456,11 @@ if nav == "Overview":
             height=280,
             showlegend=False,
         )
-        st.plotly_chart(fig_line, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        velocity_card.plotly_chart(fig_line, use_container_width=True)
 
     with col_chart2:
-        st.markdown("<div class='chart-card'>", unsafe_allow_html=True)
-        st.markdown("Department Placement Share")
+        share_card = st.container(border=True)
+        share_card.markdown("#### Department Placement Share")
 
         dept_df = get_dummy_department_distribution()
 
@@ -480,8 +480,7 @@ if nav == "Overview":
             showlegend=True,
             legend=dict(orientation="h", y=-0.15),
         )
-        st.plotly_chart(fig_pie, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        share_card.plotly_chart(fig_pie, use_container_width=True)
 
 elif nav == "Departments":
     st.markdown("### Department-Wise Analytics")
@@ -513,8 +512,8 @@ elif nav == "Departments":
     st.plotly_chart(fig_bar, use_container_width=True)
 
     # --- Secondary: Avg CTC by Department ---
-    st.markdown("<div class='chart-card' style='margin-top: 20px;'>", unsafe_allow_html=True)
-    st.markdown("#### Average CTC by Department")
+    ctc_card = st.container(border=True)
+    ctc_card.markdown("#### Average CTC by Department")
 
     ct_data = {
         "Department": ["Computer Science", "Information Tech",
@@ -541,8 +540,7 @@ elif nav == "Departments":
         margin=dict(l=0, r=0, t=20, b=0),
         title_text="Average Compensation by Department",
     )
-    st.plotly_chart(fig_ct, use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    ctc_card.plotly_chart(fig_ct, use_container_width=True)
 
 elif nav == "Companies":
     st.markdown("### Top Recruiter Slots & Activity")
@@ -550,11 +548,11 @@ elif nav == "Companies":
     comp_df = get_dummy_company_data()
 
     # Company table with status badges
-    st.markdown("<div class='chart-card'>", unsafe_allow_html=True)
-    st.markdown("#### Recruiter Slots Overview")
+    slots_card = st.container(border=True)
+    slots_card.markdown("#### Recruiter Slots Overview")
 
     # Table
-    st.dataframe(
+    slots_card.dataframe(
         comp_df.style
         .background_gradient(subset=["avg_ctc"], cmap=TEAL_CMAP)
         .highlight_max(subset=["offers"], color="#0D9488"),
@@ -568,7 +566,6 @@ elif nav == "Companies":
             "status": st.column_config.TextColumn("Status"),
         },
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
     # Export buttons
     st.markdown("---")
@@ -664,11 +661,3 @@ elif nav == "Students":
         height=420,
     )
 
-# ─────────────────────────────────────────────────────────────────────
-# FOOTER
-# ─────────────────────────────────────────────────────────────────────
-st.markdown("---")
-st.caption(
-    "CampusHire Dashboard | Design reference: SaaSUI (Groq Cloud / Churnkey patterns) | "
-    "SQL backend endpoints can be connected using mysql.connector"
-)

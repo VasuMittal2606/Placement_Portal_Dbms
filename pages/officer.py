@@ -10,8 +10,8 @@ from database import application_db as adb
 from database import officer_db as odb
 from database import placement_db as pdb
 from theme import (
-    goto_login,
     inject_css,
+    login_gate,
     metric_card,
     page_header,
     show_message,
@@ -22,12 +22,8 @@ from theme import (
 st.set_page_config(page_title="Placement Officer | CampusHire", page_icon="📊", layout="wide")
 inject_css()
 
-user = st.session_state.get("user")
-if not user or user["role"] not in ("officer", "admin"):
-    st.warning("Sign in as a placement officer from the home page.")
-    if st.button("Go to login"):
-        goto_login()
-    st.stop()
+login_gate("officer")
+user = st.session_state["user"]
 
 batches = [row["batch_year"] for row in pdb.get_batches()] or [2027]
 

@@ -10,8 +10,8 @@ import streamlit as st
 
 from database import auth_db, recruiter_db as rdb
 from theme import (
-    goto_login,
     inject_css,
+    login_gate,
     metric_card,
     page_header,
     show_message,
@@ -22,12 +22,8 @@ from theme import (
 st.set_page_config(page_title="Recruiter | CampusHire", page_icon="🏢", layout="wide")
 inject_css()
 
-user = st.session_state.get("user")
-if not user or user["role"] != "recruiter":
-    st.warning("Sign in as a recruiter from the home page.")
-    if st.button("Go to login"):
-        goto_login()
-    st.stop()
+login_gate("recruiter")
+user = st.session_state["user"]
 
 if "recruiter_id" not in st.session_state:
     st.session_state["recruiter_id"] = auth_db.get_recruiter_id(user["user_id"])

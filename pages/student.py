@@ -8,8 +8,8 @@ import streamlit as st
 
 from database import auth_db, student_db as sdb
 from theme import (
-    goto_login,
     inject_css,
+    login_gate,
     metric_card,
     page_header,
     show_message,
@@ -20,12 +20,8 @@ from theme import (
 st.set_page_config(page_title="Student | CampusHire", page_icon="🎓", layout="wide")
 inject_css()
 
-user = st.session_state.get("user")
-if not user or user["role"] != "student":
-    st.warning("Sign in as a student from the home page.")
-    if st.button("Go to login"):
-        goto_login()
-    st.stop()
+login_gate("student")
+user = st.session_state["user"]
 
 if "student_id" not in st.session_state:
     st.session_state["student_id"] = auth_db.get_student_id(user["user_id"])

@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import os
-
 import plotly.graph_objects as go
 import streamlit as st
-from streamlit.runtime.scriptrunner import get_script_run_ctx
 
 CSS = """
 <style>
@@ -187,30 +184,88 @@ def show_message(message: str) -> None:
         st.error(text or "Unexpected database response")
 
 
-def entrypoint_script() -> str:
-    """File name of the script Streamlit launched (`streamlit run <this>`).
+ROLE_LABELS = {
+    "student": "student",
+    "recruiter": "recruiter",
+    "officer": "placement officer",
+}
+ROLE_PLACEHOLDERS = {
+    "student": "student1@campus.edu",
+    "recruiter": "hr@apexquantum.com",
+    "officer": "meera.iyer@campushire.edu",
+}
+ALLOWED_ROLES = {
+    "student": ("student",),
+    "recruiter": ("recruiter",),
+    "officer": ("officer", "admin"),
+}
 
-    `st.switch_page` resolves its argument against the running entrypoint's
-    directory and only accepts the entrypoint itself or files inside `pages/`.
-    Hard-coding "app.py" therefore breaks as soon as the app is started from
-    another entrypoint (for example `streamlit run streamlit_dashboard.py`),
-    so the target is read from the script-run context instead.
+
+def _clear_session_user() -> None:
+    for key in ("user", "student_id", "recruiter_id"):
+        st.session_state.pop(key, None)
+
+
+def login_gate(role: str) -> None:
+    """Show the sign-in form for `role` and stop until that role is signed in.
+
+    The role pages belong to both entrypoints (`app.py` and
+    `streamlit_dashboard.py`), but `st.switch_page` can only reach pages of the
+    app that is currently running. Navigating to a hard-coded "app.py"
+    therefore fails whenever the dashboard is the entrypoint, so the login
+    form is rendered on the page itself instead.
     """
-    try:
-        ctx = get_script_run_ctx()
-        if ctx is not None and ctx.main_script_path:
-            return os.path.basename(ctx.main_script_path)
-    except Exception:  # bare mode / no runtime context
-        pass
-    return "app.py"
+    from database import auth_db
 
+    allowed = ALLOWED_ROLES[role]
+    label = ROLE_LABELS[role]
+    user = st.session_state.get("user")
+    if user and user.get("role") in allowed:
+        return
 
-def goto_login() -> None:
-    """Clear the session and return to the entrypoint (the sign-in screen)."""
-    st.session_state.pop("user", None)
-    st.switch_page(entrypoint_script())
+    st.markdown(f"### Sign in as a {label}")
+    st.caption("Credentials are verified inside MySQL (`sp_verify_login`, SHA-256).")
+    if user:
+        st.info(
+            f"You are signed in as {user['full_name']} ({user['role']}). "
+            f"Sign in with a {label} account to open this dashboard."
+        )
+
+    with st.form(f"{role}_login_form"):
+        email = st.text_input("Email", placeholder=ROLE_PLACEHOLDERS[role])
+        password = st.text_input("Password", type="password", placeholder="password123")
+        submitted = st.form_submit_button("Sign in", use_container_width=True)
+
+    if submitted:
+        if not email.strip() or not password:
+            st.warning("Enter both email and password.")
+        else:
+            try:
+                result = auth_db.verify_login(email.strip(), password)
+            except Exception as exc:  # noqa: BLE001 - surface DB errors in the UI
+                st.error(f"Database error: {exc}")
+            else:
+                if result and result["role"] in allowed:
+                    _clear_session_user()
+                    st.session_state["user"] = {
+                        "user_id": result["user_id"],
+                        "role": result["role"],
+                        "full_name": result["full_name"],
+                        "email": email.strip(),
+                    }
+                    st.rerun()
+                elif result:
+                    st.error(
+                        f"{email.strip()} is a {result['role']} account. "
+                        f"Sign in with a {label} account to open this dashboard."
+                    )
+                else:
+                    st.error("Invalid email or password")
+    st.stop()
 
 
 def sign_out_button() -> None:
     if st.sidebar.button("Sign out", use_container_width=True):
-        goto_login()
+        _clear_session_user()
+        # the role page re-renders and shows its sign-in form
+        st.rerun()
